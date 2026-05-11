@@ -642,56 +642,93 @@ body {
 
 /* ── MULTIPLE CHOICE OPTIONS ── */
 .options-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px; margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 .mc-option-btn {
-    background: var(--surface-2);
-    border: 1px solid var(--border-2);
-    border-radius: var(--radius-md);
-    padding: 14px 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border-2);
+    border-radius: 12px;
+    padding: 13px 16px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.18s ease;
     text-align: left;
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
     font-family: var(--font-body);
-    min-height: 72px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.mc-option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(26,127,212,0.04), transparent);
+    opacity: 0;
+    transition: opacity 0.18s ease;
 }
 .mc-option-btn:hover:not(:disabled) {
-    border-color: rgba(26,127,212,0.45);
-    background: rgba(26,127,212,0.06);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(26,127,212,0.10);
+    border-color: var(--violet);
+    background: var(--surface);
+    transform: translateX(3px);
+    box-shadow: -3px 0 0 0 var(--violet), 0 2px 12px rgba(26,127,212,0.10);
+}
+.mc-option-btn:hover:not(:disabled)::before {
+    opacity: 1;
 }
 .mc-option-letter {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--surface-3); color: var(--text-3);
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--surface-3);
+    color: var(--text-2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.7rem; font-weight: 700;
-    flex-shrink: 0; transition: var(--transition);
+    font-size: 0.72rem; font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--border-2);
 }
 .mc-option-btn:hover:not(:disabled) .mc-option-letter {
-    background: var(--violet); color: #fff;
+    background: var(--violet);
+    color: #fff;
+    border-color: var(--violet);
 }
 .mc-option-text {
-    font-size: 0.82rem; font-weight: 400;
-    color: var(--text); line-height: 1.4; flex: 1;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.45;
+    flex: 1;
 }
 .mc-option-btn.mc-correct {
-    background: var(--success-bg) !important;
+    background: rgba(22,163,74,0.06) !important;
     border-color: var(--success) !important;
-    box-shadow: 0 0 0 3px rgba(22,163,74,0.10) !important;
-    transform: none !important;
+    box-shadow: -3px 0 0 0 var(--success), 0 2px 12px rgba(22,163,74,0.10) !important;
+    transform: translateX(3px) !important;
 }
-.mc-option-btn.mc-correct .mc-option-letter { background: var(--success); color: #fff; }
+.mc-option-btn.mc-correct .mc-option-letter {
+    background: var(--success) !important;
+    color: #fff !important;
+    border-color: var(--success) !important;
+}
+.mc-option-btn.mc-correct .mc-option-text { color: var(--success); font-weight: 500; }
 .mc-option-btn.mc-wrong {
-    background: var(--danger-bg) !important;
+    background: rgba(229,82,74,0.06) !important;
     border-color: var(--danger) !important;
-    box-shadow: 0 0 0 3px rgba(229,82,74,0.10) !important;
-    transform: none !important;
+    box-shadow: -3px 0 0 0 var(--danger), 0 2px 12px rgba(229,82,74,0.10) !important;
+    transform: translateX(3px) !important;
 }
-.mc-option-btn.mc-wrong .mc-option-letter { background: var(--danger); color: #fff; }
-.mc-option-btn:disabled { cursor: default; }
+.mc-option-btn.mc-wrong .mc-option-letter {
+    background: var(--danger) !important;
+    color: #fff !important;
+    border-color: var(--danger) !important;
+}
+.mc-option-btn.mc-wrong .mc-option-text { color: var(--danger); }
+.mc-option-btn:disabled { cursor: default; opacity: 0.8; }
 
 /* ── STREAK ── */
 .streak-row {
@@ -1038,7 +1075,7 @@ body {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 380px) {
-    .options-grid { grid-template-columns: 1fr; }
+    .options-grid { gap: 7px; }
     .hero-title { font-size: 1.7rem; }
     .app-container { padding: 20px 16px 60px; }
 }
