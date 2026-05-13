@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDReady | B.D Domingo Realty</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.14.5/sweetalert2.min.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="BDDRC%20Logo.png">
+    <link rel="apple-touch-icon" href="BDDRC%20Logo.png">
+    <meta name="theme-color" content="#0e9e68">
+
+    <style>
+        /* ── Global loader overlay ── */
+        #global-loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(10, 20, 15, 0.85);
+            backdrop-filter: blur(6px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+        }
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #0e9e68;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Toast notifications ── */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            background: #1e2d26;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.25s, transform 0.25s;
+            max-width: 320px;
+            pointer-events: auto;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { border-left: 3px solid #0e9e68; }
+        .toast-error   { border-left: 3px solid #e74c3c; }
+        .toast-warning { border-left: 3px solid #f39c12; }
+        .toast-info    { border-left: 3px solid #3498db; }
+
+        /* ── Score pills in progress ── */
+        .score-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .score-pill.green { background: rgba(14,158,104,0.18); color: #0e9e68; }
+        .score-pill.gold  { background: rgba(243,156,18,0.18);  color: #f39c12; }
+        .score-pill.red   { background: rgba(231,76,60,0.18);   color: #e74c3c; }
+
+        /* ── Multiple Choice Options ── */
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0 4px;
+        }
+        .option-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(14,158,104,0.08);
+            border: 1.5px solid rgba(14,158,104,0.30);
+            border-radius: 12px;
+            color: #000000;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.45;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.12s, box-shadow 0.18s;
+            counter-increment: mc-option;
+        }
+        .options-grid { counter-reset: mc-option; }
+        .option-btn::before {
+            content: counter(mc-option, upper-alpha);
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: rgba(14,158,104,0.18);
+            border: 1.5px solid rgba(14,158,104,0.40);
+            font-size: 12px;
+            font-weight: 600;
+            color: #0e9e68;
+            transition: background 0.18s, border-color 0.18s, color 0.18s;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: rgba(14,158,104,0.10);
+            border-color: rgba(14,158,104,0.35);
+            transform: translateX(2px);
+            box-shadow: 0 0 0 1px rgba(14,158,104,0.15);
+        }
+        .option-btn:hover:not(:disabled)::before {
+            background: rgba(14,158,104,0.2);
+            border-color: rgba(14,158,104,0.5);
+            color: #0e9e68;
+        }
+        .option-btn:active:not(:disabled) {
+            transform: translateX(1px) scale(0.99);
+        }
+        .option-btn:disabled {
+            cursor: default;
+        }
+        .option-btn.correct {
+            background: rgba(14,158,104,0.14);
+            border-color: rgba(14,158,104,0.55);
+            color: #fff;
+            box-shadow: 0 0 0 1px rgba(14,158,104,0.2), inset 0 0 20px rgba(14,158,104,0.06);
+        }
+        .option-btn.correct::before {
+            background: rgba(14,158,104,0.3);
+            border-color: #0e9e68;
+            color: #0e9e68;
+        }
+        .option-btn.incorrect {
+            background: rgba(231,76,60,0.10);
+            border-color: rgba(231,76,60,0.45);
+            color: rgba(255,255,255,0.6);
+        }
+        .option-btn.incorrect::before {
+            background: rgba(231,76,60,0.2);
+            border-color: rgba(231,76,60,0.5);
+            color: #e74c3c;
+        }
+        .option-btn:disabled:not(.correct):not(.incorrect) {
+            opacity: 0.45;
+        }
+
+        /* ── Flashcard flip ── */
+        .card-stage {
+            perspective: 1200px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        .flip-card {
+            position: relative;
+            width: 100%;
+            min-height: 220px;
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+        }
+        .card-front {
+            background: rgba(14,158,104,0.08);
+            border: 1.5px solid rgba(14,158,104,0.25);
+        }
+        .card-back {
+            background: rgba(14,158,104,0.14);
+            border: 1.5px solid rgba(14,158,104,0.45);
+            transform: rotateY(180deg);
+        }
+        .face-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.55;
+        }
+        .answer-label { color: #0e9e68; opacity: 0.85; }
+        .face-text {
+            font-size: 16px;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+        .flip-cue {
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.4;
+            margin-top: 8px;
+        }
+
+        /* ── Landing mockup flip ── */
+        .mockup-flip {
+            perspective: 1200px;
+            cursor: pointer;
+        }
+        .mockup-flip .mockup-card-back {
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .mockup-flip {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .mockup-flip.flipped {
+            transform: rotateY(180deg);
+        }
+        .mockup-card {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .mockup-card-front {
+            position: relative;
+        }
+        .mockup-card-back {
+            position: absolute;
+            inset: 0;
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== LANDING PAGE ===================== -->
+<div id="landing-page" class="landing-page">
+    <div class="landing-noise"></div>
+    <div class="landing-orb landing-orb-1" aria-hidden="true"></div>
+    <div class="landing-orb landing-orb-2" aria-hidden="true"></div>
+    <div class="landing-orb landing-orb-3" aria-hidden="true"></div>
+
+    <nav class="landing-nav">
+        <div class="landing-nav-logo">
+            <img src="BDDRC%20Logo.png" alt="B.D Domingo Realty logo" class="company-logo-img">
+            <div class="landing-nav-brand">
+                <span class="landing-nav-name">BDReady</span>
+                <span class="landing-nav-company">B.D Domingo Realty &amp; Construction Corp.</span>
+            </div>
+        </div>
+        <div class="landing-nav-badge">Agent Portal</div>
+    </nav>
+
+    <main class="landing-hero">
+        <div class="landing-hero-content">
+            <div class="landing-eyebrow">
+                <span class="eyebrow-dot"></span>
+                Sales Agent Training Tool
+            </div>
+
+            <h1 class="landing-headline">
+                Know your properties.<br>
+                <em>Close with confidence.</em>
+            </h1>
+
+            <p class="landing-description">
+                BDReady is your personal study companion — a lightweight flashcard platform built exclusively for B.D Domingo Realty's Angels. Create custom study decks, quiz yourself on property knowledge, and track your progress, all from your browser.
+            </p>
+
+            <div class="landing-cta-group">
+                <button class="landing-btn-primary" onclick="enterApp()">
+                    <span>Start Studying</span>
+                    <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:8px;">
+                        <path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                <button class="landing-btn-ghost" onclick="scrollToFeatures()">See Features</button>
+            </div>
+
+            <div class="landing-trust-row">
+                <div class="trust-item">
+                    <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path></svg>
+                    <span>No login needed</span>
+                </div>
+                <div class="trust-divider"></div>
+                <div class="trust-item">
+                    <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M12 18h.01"></path></svg>
+                    <span>Works on mobile</span>
+                </div>
+                <div class="trust-divider"></div>
+                <div class="trust-item">
+                    <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                    <span>Instant access</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="landing-card-mockup">
+            <div class="mockup-flip" id="landing-mockup" role="button" tabindex="0" aria-label="Flip example card" onclick="toggleLandingMockup()" onkeydown="if(event.key==='Enter'||event.key===' ')toggleLandingMockup()">
+                <div class="mockup-card mockup-card-front">
+                    <div class="mockup-label">Question</div>
+                    <div class="mockup-text">What is the USP of the Liora Homes - Amora Model House?</div>
+                    <div class="mockup-hint">Tap to flip →</div>
+                </div>
+                <div class="mockup-card mockup-card-back">
+                    <div class="mockup-label">Answer</div>
+                    <div class="mockup-text">The ONE &amp; ONLY Solar Powered Home In Cavite with Complete Amenities Pa!</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="landing-features" class="landing-features">
+        <div class="features-eyebrow">Everything You Need</div>
+        <h2 class="features-title">Study smarter, not harder</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-wrap green" aria-hidden="true"><span class="emoji">📖</span></div>
+                <h3 class="feature-name">Study Mode</h3>
+                <p class="feature-desc">Flip through Q&amp;A flashcards at your own pace. Perfect for first-pass review before a client meeting.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap blue" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l4-1 11-11a2 2 0 0 0-3-3L4 17z"></path><path d="M14 6l4 4"></path></svg>
+                </div>
+                <h3 class="feature-name">Quiz Mode</h3>
+                <p class="feature-desc">Type answers from memory to reinforce active recall — the most effective way to retain information long-term.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap gold" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2"></circle><rect x="10" y="5" width="10" height="4" rx="1"></rect><circle cx="7" cy="17" r="2"></circle><rect x="10" y="15" width="10" height="4" rx="1"></rect></svg>
+                </div>
+                <h3 class="feature-name">Multiple Choice</h3>
+                <p class="feature-desc">Pick from four options — great for quick mobile reviews during commutes or between appointments.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap teal" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h5l2 3h11v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path></svg>
+                </div>
+                <h3 class="feature-name">Custom Folders</h3>
+                <p class="feature-desc">Organize cards by project — Liora Homes, Kaia Homes or any topic you need to master.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap violet" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21v-6"></path><path d="M3 21h18"></path><polyline points="3 13 9 7 13 11 21 3"></polyline></svg>
+                </div>
+                <h3 class="feature-name">Progress Tracking</h3>
+                <p class="feature-desc">See your quiz history and scores at a glance. Identify weak spots and focus your next study session.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap emerald" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v5c0 5-3.6 9-7 10-3.4-1-7-5-7-10V6l7-4z"></path><rect x="9.5" y="11.5" width="5" height="4" rx="1"></rect></svg>
+                </div>
+                <h3 class="feature-name">Cloud Sync</h3>
+                <p class="feature-desc">Cards are saved to Supabase — accessible from any device, any browser, instantly in sync.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrap sky" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="16 16 12 12 8 16"/><path d="M12 12v9"/></svg>
+                </div>
+                <h3 class="feature-name">Sync &amp; Backup</h3>
+                <p class="feature-desc">Download and import backups to move cards between devices. Importing offers <strong>Replace</strong> or <strong>Merge</strong> (dedupes cards). Find it under Manage → Add Cards.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="landing-footer-cta">
+        <p class="footer-cta-text">Ready to sharpen your edge?</p>
+        <button class="landing-btn-primary large" onclick="enterApp()">
+            <span>Open BDReady</span>
+            <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:8px;">
+                <path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+
+    <footer class="landing-footer">
+        <p>B.D Domingo Realty &amp; Construction Corp. — Internal Use Only</p>
+        <p class="footer-built">Built for the Angels 💚</p>
+    </footer>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="main-app" class="app-wrapper" style="display:none;">
+    <div class="noise-overlay" aria-hidden="true"></div>
+    <div class="glow-orb orb-top" aria-hidden="true"></div>
+    <div class="glow-orb orb-bottom" aria-hidden="true"></div>
+
+    <div class="app-container">
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-lockup">
+                <div class="logo-mark" onclick="showLanding(); try{ goTo('dashboard'); } catch(e) {}" role="button" tabindex="0" aria-label="Return to landing" style="cursor:pointer;">
+                    <img src="BDDRC%20Logo.png" alt="BD logo" class="logo-mark-img">
+                </div>
+                <div class="header-text">
+                    <h1 class="brand-name">BDReady</h1>
+                    <p class="brand-tagline">B.D Domingo Realty &amp; Construction Corp.</p>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="header-badge">Agent Portal</div>
+            </div>
+        </header>
+
+        <!-- ===================== DASHBOARD ===================== -->
+        <div id="dashboard-section" class="section active">
+            <div class="hero-block">
+                <div class="hero-eyebrow">Training Portal</div>
+                <h2 class="hero-title">Welcome back,<br><em>Angel</em></h2>
+                <p class="hero-sub">Master real estate knowledge, one card at a time.</p>
+            </div>
+            <div class="stats-row" id="dashboard-stats"></div>
+            <div class="nav-label">Quick Access</div>
+            <div class="menu-grid">
+                <button class="menu-card featured" onclick="goTo('study')">
+                    <div class="menu-card-inner">
+                        <div class="card-icon" aria-hidden="true"><span class="emoji">📖</span></div>
+                        <div class="card-body">
+                            <div class="card-title">Study Mode</div>
+                            <div class="card-desc">Flip through flashcards at your own pace</div>
+                        </div>
+                        <div class="card-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    </div>
+                </button>
+                <button class="menu-card" onclick="goTo('quiz')">
+                    <div class="menu-card-inner">
+                        <div class="card-icon">✍️</div>
+                        <div class="card-body">
+                            <div class="card-title">Quiz Mode</div>
+                            <div class="card-desc">Type answers &amp; test your recall</div>
+                        </div>
+                        <div class="card-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    </div>
+                </button>
+                <button class="menu-card" onclick="goTo('mcquiz')">
+                    <div class="menu-card-inner">
+                        <div class="card-icon">✅</div>
+                        <div class="card-body">
+                            <div class="card-title">Multiple Choice</div>
+                            <div class="card-desc">Pick from 4 options — great for mobile</div>
+                        </div>
+                        <div class="card-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    </div>
+                </button>
+                <button class="menu-card" onclick="goTo('manage')">
+                    <div class="menu-card-inner">
+                        <div class="card-icon">🗂️</div>
+                        <div class="card-body">
+                            <div class="card-title">Manage Cards</div>
+                            <div class="card-desc">Create and organize your folders</div>
+                        </div>
+                        <div class="card-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    </div>
+                </button>
+                <button class="menu-card" onclick="goTo('progress')">
+                    <div class="menu-card-inner">
+                        <div class="card-icon">📈</div>
+                        <div class="card-body">
+                            <div class="card-title">My Progress</div>
+                            <div class="card-desc">Track your quiz history and scores</div>
+                        </div>
+                        <div class="card-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ===================== STUDY MODE ===================== -->
+        <div id="study-section" class="section">
+            <div class="section-header">
+                <button class="btn-back" onclick="goTo('dashboard')">
+                    <svg class="back-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px;"><path d="M15 18l-6-6 6-6"></path></svg> Dashboard
+                </button>
+                <div class="section-heading">
+                    <h2 class="section-title">Study Mode</h2>
+                    <p class="section-sub">Tap the card to reveal the answer</p>
+                </div>
+            </div>
+            <select id="study-folder-select" class="select-field" onchange="startStudy(this.value)">
+                <option value="">— Choose a folder to study —</option>
+            </select>
+            <div id="study-ui" style="display:none;">
+                <div class="study-meta">
+                    <span id="study-counter" class="meta-pill"></span>
+                    <span id="study-folder-name" class="meta-pill gold"></span>
+                </div>
+                <div class="card-stage" onclick="flipCard()">
+                    <div class="flip-card" id="study-card">
+                        <div class="card-face card-front">
+                            <div class="face-label">Question</div>
+                            <div id="study-q" class="face-text"></div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="face-label answer-label">Answer</div>
+                            <div id="study-a" class="face-text"></div>
+                        </div>
+                    </div>
+                    <div class="flip-cue">Tap to flip</div>
+                </div>
+                <div class="study-nav">
+                    <button class="nav-btn" onclick="prevStudyCard()" id="prev-btn">◀ Prev</button>
+                    <button class="nav-btn primary" onclick="nextStudyCard()">Next ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== QUIZ MODE ===================== -->
+        <div id="quiz-section" class="section">
+            <div class="section-header">
+                <button class="btn-back" onclick="goTo('dashboard')">
+                    <svg class="back-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px;"><path d="M15 18l-6-6 6-6"></path></svg> Dashboard
+                </button>
+                <div class="section-heading">
+                    <h2 class="section-title">Quiz Mode</h2>
+                    <p class="section-sub">Type your answer from memory</p>
+                </div>
+            </div>
+            <select id="quiz-folder-select" class="select-field" onchange="startQuiz(this.value)">
+                <option value="">— Choose a folder to quiz —</option>
+            </select>
+            <div class="quiz-panel" id="quiz-ui" style="display:none;">
+                <div class="progress-track">
+                    <div class="progress-bar-wrap">
+                        <div id="quiz-progress-bar" class="progress-fill"></div>
+                    </div>
+                    <div id="quiz-progress" class="progress-label"></div>
+                </div>
+                <div id="quiz-q" class="question-text"></div>
+                <input type="text" id="user-answer" class="answer-input" placeholder="Type your answer here…" autocomplete="off">
+                <button id="submit-quiz-btn" class="action-btn gold" onclick="checkAnswer()">Submit Answer</button>
+                <div id="quiz-feedback" class="feedback-block"></div>
+                <button id="next-quiz-btn" class="action-btn ghost" onclick="nextQuizQuestion()" style="display:none;">Next Question <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+            </div>
+            <div id="quiz-final-stats" class="final-panel"></div>
+        </div>
+
+        <!-- ===================== MULTIPLE CHOICE ===================== -->
+        <div id="mcquiz-section" class="section">
+            <div class="section-header">
+                <button class="btn-back" onclick="goTo('dashboard')">
+                    <svg class="back-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px;"><path d="M15 18l-6-6 6-6"></path></svg> Dashboard
+                </button>
+                <div class="section-heading">
+                    <h2 class="section-title">Multiple Choice</h2>
+                    <p class="section-sub">Select the correct answer from four options</p>
+                </div>
+            </div>
+            <select id="mc-folder-select" class="select-field" onchange="startMCQuiz(this.value)">
+                <option value="">— Choose a folder —</option>
+            </select>
+            <div id="mc-ui" style="display:none;">
+                <div class="quiz-panel">
+                    <div class="progress-track">
+                        <div class="progress-bar-wrap">
+                            <div id="mc-progress-bar" class="progress-fill violet"></div>
+                        </div>
+                        <div id="mc-progress" class="progress-label"></div>
+                    </div>
+                    <div id="mc-streak-row" class="streak-row" style="display:none;">
+                        <span id="mc-streak-badge" class="streak-chip">0 streak</span>
+                    </div>
+                    <div id="mc-q" class="question-text"></div>
+                    <div id="mc-options" class="options-grid"></div>
+                    <div id="mc-feedback" class="feedback-block" style="display:none;"></div>
+                    <button id="mc-next-btn" class="action-btn ghost" onclick="nextMCQuestion()" style="display:none;">Next Question <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+                </div>
+            </div>
+            <div id="mc-final-stats" class="final-panel"></div>
+        </div>
+
+        <!-- ===================== MANAGE ===================== -->
+        <div id="manage-section" class="section">
+            <div class="section-header">
+                <button class="btn-back" onclick="goTo('dashboard')">
+                    <svg class="back-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px;"><path d="M15 18l-6-6 6-6"></path></svg> Dashboard
+                </button>
+                <div class="section-heading">
+                    <h2 class="section-title">Manage Content</h2>
+                    <p class="section-sub">Create folders and add flashcards</p>
+                </div>
+            </div>
+            <div class="tab-rail">
+                <button class="tab-pill active" onclick="switchTab('tab-add')">Add Cards</button>
+                <button class="tab-pill" onclick="switchTab('tab-view')">View All</button>
+            </div>
+            <!-- ADD CARDS -->
+            <div id="tab-add" class="tab-pane active">
+                <div class="form-section">
+                    <div class="form-section-label">New Folder</div>
+                    <div class="inline-field">
+                        <input type="text" id="folder-input" class="text-field" placeholder="e.g., Liora Homes FAQs">
+                        <button class="inline-action" onclick="addFolder()">Create</button>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-label">Add Flashcard</div>
+                    <select id="folder-select" class="select-field">
+                        <option value="">— Choose Folder —</option>
+                    </select>
+                    <input type="text" id="new-q" class="text-field" placeholder="Question">
+                    <textarea id="new-a" class="text-area" placeholder="Answer" rows="3"></textarea>
+                    <button class="action-btn gold full-width" onclick="addCard()">Save Flashcard</button>
+                    <div style="margin-top:12px; display:flex; gap:8px;">
+                        <button class="action-btn ghost" onclick="exportBackup()">⬇️ Download Backup</button>
+                        <button class="action-btn" onclick="document.getElementById('backup-file-input').click()">⬆️ Import Backup</button>
+                        <input id="backup-file-input" type="file" accept="application/json" style="display:none;" onchange="handleBackupFile(this.files)">
+                    </div>
+                </div>
+            </div>
+            <!-- VIEW ALL -->
+            <div id="tab-view" class="tab-pane">
+                <div id="folder-list" class="folder-list"></div>
+            </div>
+        </div>
+
+        <!-- ===================== PROGRESS ===================== -->
+        <div id="progress-section" class="section">
+            <div class="section-header">
+                <button class="btn-back" onclick="goTo('dashboard')">
+                    <svg class="back-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px;"><path d="M15 18l-6-6 6-6"></path></svg> Dashboard
+                </button>
+                <div class="section-heading">
+                    <h2 class="section-title">My Progress</h2>
+                    <p class="section-sub">Your learning journey at a glance</p>
+                </div>
+            </div>
+            <div id="progress-content"></div>
+        </div>
+
+    </div><!-- /app-container -->
+</div><!-- /main-app -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Global loader -->
+<div id="global-loader">
+    <div class="loader-spinner"></div>
+    <p>Connecting to database…</p>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Flashcard</h3>
+            <button class="modal-close" onclick="closeEditModal()" aria-label="Close">×</button>
+        </div>
+        <input type="hidden" id="edit-folder">
+        <input type="hidden" id="edit-index">
+        <div class="modal-field">
+            <label class="field-label">Question</label>
+            <input type="text" id="edit-q" class="text-field" placeholder="Question">
+        </div>
+        <div class="modal-field">
+            <label class="field-label">Answer</label>
+            <textarea id="edit-a" class="text-area" placeholder="Answer" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn ghost" onclick="closeEditModal()">Cancel</button>
+            <button class="action-btn gold" onclick="saveEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+
+<!-- ================================================================
+     LANDING / APP NAVIGATION
+     ================================================================ -->
+<script>
+function showLanding() {
+    const landing = document.getElementById('landing-page');
+    const app     = document.getElementById('main-app');
+    app.style.display     = 'none';
+    landing.style.display = 'block';
+    landing.style.animation = 'revealUp 0.38s cubic-bezier(0.25, 0.8, 0.25, 1) forwards';
+    landing.scrollIntoView({ behavior: 'instant' });
+}
+
+function showApp() {
+    const landing = document.getElementById('landing-page');
+    const app     = document.getElementById('main-app');
+    landing.style.animation = 'landingExit 0.45s cubic-bezier(0.25,0.8,0.25,1) forwards';
+    setTimeout(() => {
+        landing.style.display = 'none';
+        app.style.display     = 'flex';
+    }, 420);
+}
+
+function enterApp() {
+    try { history.pushState({ app: 'main', section: 'dashboard' }, '', '#app'); } catch (e) {}
+    showApp();
+}
+
+function scrollToFeatures() {
+    document.getElementById('landing-features').scrollIntoView({ behavior: 'smooth' });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    try { history.replaceState({ app: 'landing' }, '', location.pathname + location.search); } catch (e) {}
+});
+
+window.addEventListener('popstate', (e) => {
+    const state = e.state || {};
+    if (state.app === 'main') {
+        showApp();
+        try { goTo(state.section || 'dashboard', false); } catch (err) {}
+    } else {
+        showLanding();
+    }
+});
+</script>
+
+<!-- ================================================================
+     BDREADY · SUPABASE EDITION
+     ⚠️  Replace the two values below with your Supabase credentials
+         Supabase → Project Settings → API
+     ================================================================ -->
+<script>
+// ── ⚙️  CONFIG — paste your credentials here ────────────────────
+const SUPABASE_URL  = 'https://goowzyooyronmygcfxrp.supabase.co';  // e.g. https://xyzxyz.supabase.co
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb3d6eW9veXJvbm15Z2NmeHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NjQzMTMsImV4cCI6MjA5NDA0MDMxM30.Ugpn0cj6T0V_vt2WbJ-bcaezQqqCNqkfGtWv9sITa-s';     // starts with eyJ...
+// ────────────────────────────────────────────────────────────────
+
+// ── Tiny Supabase REST helper ────────────────────────────────────
+const sb = {
+    get headers() {
+        return {
+            'Content-Type':  'application/json',
+            'apikey':        SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer':        'return=representation',
+        };
+    },
+    async get(table, params = '') {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: this.headers });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    },
+    async post(table, body) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+            method: 'POST', headers: this.headers, body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    },
+    async patch(table, id, body) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+            method: 'PATCH', headers: this.headers, body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    },
+    async delete(table, filter) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+            method: 'DELETE', headers: this.headers,
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return res.ok;
+    },
+};
+
+// ── In-memory cache ──────────────────────────────────────────────
+// { [folderName]: { id: uuid, cards: [{id, question, answer}] } }
+let DB = {};
+
+async function loadFromSupabase() {
+    showGlobalLoader(true);
+    try {
+        const folders    = await sb.get('folders',    'select=id,name&order=created_at.asc');
+        const flashcards = await sb.get('flashcards', 'select=id,folder_id,question,answer&order=created_at.asc');
+        DB = {};
+        for (const f of folders) DB[f.name] = { id: f.id, cards: [] };
+        for (const c of flashcards) {
+            const folder = Object.values(DB).find(f => f.id === c.folder_id);
+            if (folder) folder.cards.push({ id: c.id, question: c.question, answer: c.answer });
+        }
+    } catch (err) {
+        console.error('Supabase load error:', err);
+        showToast('⚠️ Could not connect to database. Check your credentials in the HTML file.', 'error');
+    }
+    showGlobalLoader(false);
+}
+
+// ── Progress stays in localStorage (no user accounts) ────────────
+function getProgress() { return JSON.parse(localStorage.getItem('bdready_progress') || '[]'); }
+function saveProgress(arr) { localStorage.setItem('bdready_progress', JSON.stringify(arr)); }
+function logQuizResult(folder, score, total, mode) {
+    const arr = getProgress();
+    arr.push({ folder, score, total, mode, date: new Date().toISOString() });
+    if (arr.length > 200) arr.splice(0, arr.length - 200);
+    saveProgress(arr);
+}
+
+// ================================================================
+//  NAVIGATION
+// ================================================================
+let currentSection = 'dashboard';
+
+function goTo(section, pushHistory = true) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(`${section}-section`);
+    if (!el) return;
+    el.classList.add('active');
+    currentSection = section;
+    if (pushHistory) {
+        try { history.pushState({ app: 'main', section }, '', '#app'); } catch (e) {}
+    }
+    if (section === 'dashboard') renderDashboard();
+    if (section === 'study')     populateFolderSelect('study-folder-select');
+    if (section === 'quiz')      populateFolderSelect('quiz-folder-select');
+    if (section === 'mcquiz')    populateFolderSelect('mc-folder-select');
+    if (section === 'manage')    renderManage();
+    if (section === 'progress')  renderProgress();
+}
+
+// ================================================================
+//  DASHBOARD
+// ================================================================
+function renderDashboard() {
+    const folders    = Object.keys(DB);
+    const totalCards = folders.reduce((n, f) => n + DB[f].cards.length, 0);
+    const progress   = getProgress();
+    const quizCount  = progress.length;
+    const avgScore   = quizCount
+        ? Math.round(progress.reduce((s, r) => s + (r.score / r.total) * 100, 0) / quizCount) : 0;
+
+    document.getElementById('dashboard-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-num">${folders.length}</div><div class="stat-lbl">Folders</div></div>
+        <div class="stat-card"><div class="stat-num">${totalCards}</div><div class="stat-lbl">Flashcards</div></div>
+        <div class="stat-card"><div class="stat-num">${quizCount}</div><div class="stat-lbl">Quizzes Taken</div></div>
+        <div class="stat-card"><div class="stat-num">${quizCount ? avgScore + '%' : '—'}</div><div class="stat-lbl">Avg Score</div></div>`;
+}
+
+// ================================================================
+//  MANAGE
+// ================================================================
+function renderManage() {
+    populateFolderSelect('folder-select');
+    renderFolderList();
+}
+
+async function addFolder() {
+    const input = document.getElementById('folder-input');
+    const name  = input.value.trim();
+    if (!name)    return showToast('Please enter a folder name.', 'warning');
+    if (DB[name]) return showToast('A folder with that name already exists.', 'warning');
+    try {
+        const [row] = await sb.post('folders', { name });
+        DB[name] = { id: row.id, cards: [] };
+        input.value = '';
+        populateFolderSelect('folder-select');
+        showToast(`Folder "${name}" created!`, 'success');
+        renderFolderList();
+        renderDashboard();
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to create folder.', 'error');
+    }
+}
+
+async function deleteFolder(name) {
+    const confirmed = await Swal.fire({
+        title: `Delete "${name}"?`,
+        text:  'All flashcards inside will be deleted too.',
+        icon:  'warning',
+        showCancelButton:   true,
+        confirmButtonText:  'Yes, delete',
+        confirmButtonColor: '#e74c3c',
+    });
+    if (!confirmed.isConfirmed) return;
+    try {
+        await sb.delete('folders', `id=eq.${DB[name].id}`);
+        delete DB[name];
+        renderManage();
+        renderDashboard();
+        showToast(`Folder "${name}" deleted.`, 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to delete folder.', 'error');
+    }
+}
+
+async function addCard() {
+    const folderName = document.getElementById('folder-select').value;
+    const question   = document.getElementById('new-q').value.trim();
+    const answer     = document.getElementById('new-a').value.trim();
+    if (!folderName) return showToast('Please choose a folder.', 'warning');
+    if (!question)   return showToast('Question cannot be empty.', 'warning');
+    if (!answer)     return showToast('Answer cannot be empty.', 'warning');
+    try {
+        const [row] = await sb.post('flashcards', { folder_id: DB[folderName].id, question, answer });
+        DB[folderName].cards.push({ id: row.id, question: row.question, answer: row.answer });
+        document.getElementById('new-q').value = '';
+        document.getElementById('new-a').value = '';
+        showToast('Flashcard saved!', 'success');
+        renderDashboard();
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to save flashcard.', 'error');
+    }
+}
+
+async function deleteCard(folderName, cardId) {
+    try {
+        await sb.delete('flashcards', `id=eq.${cardId}`);
+        DB[folderName].cards = DB[folderName].cards.filter(c => c.id !== cardId);
+        renderFolderList();
+        renderDashboard();
+        showToast('Card deleted.', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to delete card.', 'error');
+    }
+}
+
+function renderFolderList() {
+    const container = document.getElementById('folder-list');
+    const folders   = Object.keys(DB);
+    if (!folders.length) {
+        container.innerHTML = '<p class="empty-state">No folders yet. Create one in the Add Cards tab.</p>';
+        return;
+    }
+    container.innerHTML = folders.map(name => {
+        const { cards } = DB[name];
+        const cardsHtml = cards.length
+            ? cards.map(c => `
+                <div class="card-item">
+                  <div class="card-item-texts">
+                    <div class="card-q">${escHtml(c.question)}</div>
+                    <div class="card-a">${escHtml(c.answer)}</div>
+                  </div>
+                  <div class="card-item-actions">
+                    <button class="icon-btn edit-btn" onclick="openEditModal('${escAttr(name)}','${c.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn del-btn"  onclick="deleteCard('${escAttr(name)}','${c.id}')"   title="Delete">🗑️</button>
+                  </div>
+                </div>`).join('')
+            : '<p class="empty-state">No cards in this folder.</p>';
+        return `
+            <div class="folder-group">
+              <div class="folder-group-header">
+                <span class="folder-group-name">📁 ${escHtml(name)}</span>
+                <span class="folder-group-count">${cards.length} card${cards.length !== 1 ? 's' : ''}</span>
+                <button class="icon-btn del-btn" onclick="deleteFolder('${escAttr(name)}')" title="Delete folder">🗑️</button>
+              </div>
+              <div class="folder-cards">${cardsHtml}</div>
+            </div>`;
+    }).join('');
+}
+
+// ── Edit modal ───────────────────────────────────────────────────
+function openEditModal(folderName, cardId) {
+    const card = DB[folderName]?.cards.find(c => c.id === cardId);
+    if (!card) return;
+    document.getElementById('edit-folder').value = folderName;
+    document.getElementById('edit-index').value  = cardId;
+    document.getElementById('edit-q').value      = card.question;
+    document.getElementById('edit-a').value      = card.answer;
+    document.getElementById('edit-modal').style.display = 'flex';
+}
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+}
+async function saveEdit() {
+    const folderName = document.getElementById('edit-folder').value;
+    const cardId     = document.getElementById('edit-index').value;
+    const question   = document.getElementById('edit-q').value.trim();
+    const answer     = document.getElementById('edit-a').value.trim();
+    if (!question || !answer) return showToast('Both fields required.', 'warning');
+    try {
+        await sb.patch('flashcards', cardId, { question, answer });
+        const card = DB[folderName].cards.find(c => c.id === cardId);
+        if (card) { card.question = question; card.answer = answer; }
+        closeEditModal();
+        renderFolderList();
+        showToast('Card updated!', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to update card.', 'error');
+    }
+}
+
+// ================================================================
+//  STUDY MODE
+// ================================================================
+let studyCards = [], studyIndex = 0;
+
+function populateFolderSelect(selectId) {
+    const sel     = document.getElementById(selectId);
+    const folders = Object.keys(DB);
+    sel.innerHTML = `<option value="">— Choose a folder —</option>` +
+        folders.map(f => `<option value="${escAttr(f)}">${escHtml(f)} (${DB[f].cards.length})</option>`).join('');
+}
+
+function startStudy(folderName) {
+    const ui = document.getElementById('study-ui');
+    if (!folderName) { ui.style.display = 'none'; return; }
+    const folder = DB[folderName];
+    if (!folder || !folder.cards.length) { showToast('This folder has no cards.', 'warning'); return; }
+    studyCards = shuffle([...folder.cards]);
+    studyIndex = 0;
+    ui.style.display = 'block';
+    document.getElementById('study-folder-name').textContent = folderName;
+    renderStudyCard();
+}
+
+function renderStudyCard() {
+    const card = studyCards[studyIndex];
+    document.getElementById('study-q').textContent       = card.question;
+    document.getElementById('study-a').textContent       = card.answer;
+    document.getElementById('study-counter').textContent = `${studyIndex + 1} / ${studyCards.length}`;
+    document.getElementById('study-card').classList.remove('flipped');
+    document.getElementById('prev-btn').disabled = studyIndex === 0;
+}
+
+function flipCard()      { document.getElementById('study-card').classList.toggle('flipped'); }
+function nextStudyCard() { if (studyIndex < studyCards.length - 1) { studyIndex++; renderStudyCard(); } else showToast('You reached the last card! 🎉', 'success'); }
+function prevStudyCard() { if (studyIndex > 0) { studyIndex--; renderStudyCard(); } }
+
+// ================================================================
+//  QUIZ MODE
+// ================================================================
+let quizCards = [], quizIndex = 0, quizScore = 0, quizFolderName = '';
+
+function startQuiz(folderName) {
+    const ui = document.getElementById('quiz-ui');
+    document.getElementById('quiz-final-stats').innerHTML = '';
+    if (!folderName) { ui.style.display = 'none'; return; }
+    const folder = DB[folderName];
+    if (!folder || !folder.cards.length) { showToast('This folder has no cards.', 'warning'); return; }
+    quizCards = shuffle([...folder.cards]);
+    quizIndex = 0; quizScore = 0; quizFolderName = folderName;
+    ui.style.display = 'block';
+    renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+    const card = quizCards[quizIndex];
+    const pct  = Math.round((quizIndex / quizCards.length) * 100);
+    document.getElementById('quiz-progress-bar').style.width = pct + '%';
+    document.getElementById('quiz-progress').textContent     = `${quizIndex + 1} / ${quizCards.length}`;
+    document.getElementById('quiz-q').textContent            = card.question;
+    document.getElementById('user-answer').value             = '';
+    document.getElementById('quiz-feedback').innerHTML       = '';
+    document.getElementById('quiz-feedback').className       = 'feedback-block';
+    document.getElementById('submit-quiz-btn').style.display = 'inline-flex';
+    document.getElementById('next-quiz-btn').style.display   = 'none';
+    setTimeout(() => document.getElementById('user-answer').focus(), 100);
+}
+
+function checkAnswer() {
+    const userAns   = document.getElementById('user-answer').value.trim();
+    const card      = quizCards[quizIndex];
+    const correct   = normalize(card.answer);
+    const given     = normalize(userAns);
+    const isCorrect = given === correct || correct.includes(given) || given.includes(correct);
+    document.getElementById('submit-quiz-btn').style.display = 'none';
+    document.getElementById('next-quiz-btn').style.display   = 'inline-flex';
+    const fb = document.getElementById('quiz-feedback');
+    if (isCorrect) {
+        quizScore++;
+        fb.className = 'feedback-block correct';
+        fb.innerHTML = `✅ <strong>Correct!</strong>`;
+    } else {
+        fb.className = 'feedback-block incorrect';
+        fb.innerHTML = `❌ <strong>Incorrect.</strong><br>Correct answer: <em>${escHtml(card.answer)}</em>`;
+    }
+}
+
+function nextQuizQuestion() {
+    quizIndex++;
+    if (quizIndex < quizCards.length) renderQuizQuestion(); else finishQuiz();
+}
+
+function finishQuiz() {
+    document.getElementById('quiz-ui').style.display = 'none';
+    logQuizResult(quizFolderName, quizScore, quizCards.length, 'quiz');
+    const pct = Math.round((quizScore / quizCards.length) * 100);
+    document.getElementById('quiz-final-stats').innerHTML = `
+        <div class="final-score">${pct}%</div>
+        <div class="final-label">Score: ${quizScore} / ${quizCards.length}</div>
+        <div class="final-msg">${finalMsg(pct)}</div>
+        <button class="action-btn gold" onclick="startQuiz('${escAttr(quizFolderName)}')">Try Again</button>`;
+}
+
+// ================================================================
+//  MULTIPLE CHOICE
+// ================================================================
+let mcCards = [], mcIndex = 0, mcScore = 0, mcStreak = 0, mcFolderName = '';
+
+function startMCQuiz(folderName) {
+    const ui = document.getElementById('mc-ui');
+    document.getElementById('mc-final-stats').innerHTML = '';
+    if (!folderName) { ui.style.display = 'none'; return; }
+    const folder = DB[folderName];
+    if (!folder || !folder.cards.length) { showToast('This folder has no cards.', 'warning'); return; }
+    if (folder.cards.length < 4) { showToast('Need at least 4 cards for Multiple Choice.', 'warning'); return; }
+    mcCards = shuffle([...folder.cards]);
+    mcIndex = 0; mcScore = 0; mcStreak = 0; mcFolderName = folderName;
+    ui.style.display = 'block';
+    renderMCQuestion();
+}
+
+function renderMCQuestion() {
+    const card     = mcCards[mcIndex];
+    const allCards = Object.values(DB).flatMap(f => f.cards);
+    const pct      = Math.round((mcIndex / mcCards.length) * 100);
+    document.getElementById('mc-progress-bar').style.width = pct + '%';
+    document.getElementById('mc-progress').textContent     = `${mcIndex + 1} / ${mcCards.length}`;
+    document.getElementById('mc-q').textContent            = card.question;
+    document.getElementById('mc-feedback').style.display   = 'none';
+    document.getElementById('mc-next-btn').style.display   = 'none';
+
+    const wrong   = shuffle(allCards.filter(c => c.id !== card.id)).slice(0, 3);
+    const options = shuffle([card, ...wrong]);
+    document.getElementById('mc-options').innerHTML = options.map(opt => `
+        <button class="option-btn" onclick="checkMC('${opt.id}','${card.id}')">
+          ${escHtml(opt.answer)}
+        </button>`).join('');
+
+    const streakRow = document.getElementById('mc-streak-row');
+    if (mcStreak >= 2) {
+        streakRow.style.display = 'flex';
+        document.getElementById('mc-streak-badge').textContent = `🔥 ${mcStreak} streak`;
+    } else {
+        streakRow.style.display = 'none';
+    }
+}
+
+function checkMC(selectedId, correctId) {
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+    const isCorrect = selectedId === correctId;
+    if (isCorrect) { mcScore++; mcStreak++; } else { mcStreak = 0; }
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        const optId = Object.values(DB).flatMap(f => f.cards)
+            .find(c => c.answer === btn.textContent.trim())?.id;
+        if (optId === correctId)             btn.classList.add('correct');
+        else if (optId === selectedId && !isCorrect) btn.classList.add('incorrect');
+    });
+
+    const fb = document.getElementById('mc-feedback');
+    fb.style.display = 'block';
+    fb.className     = `feedback-block ${isCorrect ? 'correct' : 'incorrect'}`;
+    fb.textContent   = isCorrect ? '✅ Correct!' : '❌ Incorrect.';
+    document.getElementById('mc-next-btn').style.display = 'inline-flex';
+}
+
+function nextMCQuestion() {
+    mcIndex++;
+    if (mcIndex < mcCards.length) renderMCQuestion(); else finishMCQuiz();
+}
+
+function finishMCQuiz() {
+    document.getElementById('mc-ui').style.display = 'none';
+    logQuizResult(mcFolderName, mcScore, mcCards.length, 'multiple-choice');
+    const pct = Math.round((mcScore / mcCards.length) * 100);
+    document.getElementById('mc-final-stats').innerHTML = `
+        <div class="final-score">${pct}%</div>
+        <div class="final-label">Score: ${mcScore} / ${mcCards.length}</div>
+        <div class="final-msg">${finalMsg(pct)}</div>
+        <button class="action-btn gold" onclick="startMCQuiz('${escAttr(mcFolderName)}')">Try Again</button>`;
+}
+
+// ================================================================
+//  PROGRESS
+// ================================================================
+function renderProgress() {
+    const results   = getProgress().slice().reverse();
+    const container = document.getElementById('progress-content');
+    if (!results.length) {
+        container.innerHTML = '<p class="empty-state">No quiz history yet. Take a quiz to see results here.</p>';
+        return;
+    }
+    const avgScore = Math.round(results.reduce((s, r) => s + (r.score / r.total) * 100, 0) / results.length);
+    const best     = Math.max(...results.map(r => Math.round((r.score / r.total) * 100)));
+    container.innerHTML = `
+        <div class="stats-row" style="margin-bottom:20px;">
+          <div class="stat-card"><div class="stat-num">${results.length}</div><div class="stat-lbl">Total Quizzes</div></div>
+          <div class="stat-card"><div class="stat-num">${avgScore}%</div><div class="stat-lbl">Avg Score</div></div>
+          <div class="stat-card"><div class="stat-num">${best}%</div><div class="stat-lbl">Best Score</div></div>
+        </div>
+        <div class="folder-group">
+          <div class="folder-group-header"><span class="folder-group-name">📋 Quiz History</span></div>
+          ${results.map(r => {
+              const pct  = Math.round((r.score / r.total) * 100);
+              const date = new Date(r.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+              return `
+                <div class="card-item">
+                  <div class="card-item-texts">
+                    <div class="card-q">${escHtml(r.folder)}</div>
+                    <div class="card-a">${r.mode === 'multiple-choice' ? 'Multiple Choice' : 'Quiz'} · ${date}</div>
+                  </div>
+                  <div class="score-pill ${pct >= 80 ? 'green' : pct >= 50 ? 'gold' : 'red'}">${pct}%</div>
+                </div>`;
+          }).join('')}
+        </div>`;
+}
+
+// ================================================================
+//  BACKUP / IMPORT
+// ================================================================
+function exportBackup() {
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: `bdready-backup-${Date.now()}.json` });
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+async function handleBackupFile(files) {
+    if (!files || !files[0]) return;
+    try {
+        const backup = JSON.parse(await files[0].text());
+        const { value: mode } = await Swal.fire({
+            title: 'Import Backup', text: 'Replace all data or merge with existing?',
+            icon: 'question', showCancelButton: true,
+            confirmButtonText: 'Replace', cancelButtonText: 'Merge',
+        });
+        if (mode === undefined) return;
+        if (mode) {
+            for (const name of Object.keys(DB)) await sb.delete('folders', `id=eq.${DB[name].id}`);
+            DB = {};
+        }
+        for (const [folderName, data] of Object.entries(backup)) {
+            const cards = Array.isArray(data) ? data : (data.cards || []);
+            if (!DB[folderName]) {
+                const [row] = await sb.post('folders', { name: folderName });
+                DB[folderName] = { id: row.id, cards: [] };
+            }
+            for (const c of cards) {
+                const q = c.question || c.q || '';
+                const a = c.answer   || c.a || '';
+                if (!q || !a) continue;
+                if (DB[folderName].cards.some(e => normalize(e.question) === normalize(q))) continue;
+                const [row] = await sb.post('flashcards', { folder_id: DB[folderName].id, question: q, answer: a });
+                DB[folderName].cards.push({ id: row.id, question: q, answer: a });
+            }
+        }
+        renderManage();
+        renderDashboard();
+        showToast('Backup imported successfully!', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Import failed. Is it a valid BDReady backup file?', 'error');
+    }
+}
+
+// ================================================================
+//  TABS
+// ================================================================
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab-pill').forEach(b => {
+        if (b.getAttribute('onclick')?.includes(tabId)) b.classList.add('active');
+    });
+    if (tabId === 'tab-view') renderFolderList();
+}
+
+// ================================================================
+//  TOAST & LOADER
+// ================================================================
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast     = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3200);
+}
+
+function showGlobalLoader(show) {
+    const el = document.getElementById('global-loader');
+    if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+// ================================================================
+//  LANDING MOCKUP
+// ================================================================
+function toggleLandingMockup() {
+    document.getElementById('landing-mockup')?.classList.toggle('flipped');
+}
+
+// ================================================================
+//  UTILITIES
+// ================================================================
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+function normalize(str) {
+    return str.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) {
+    return String(str).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+function finalMsg(pct) {
+    if (pct === 100) return "🏆 Perfect score! You're an Angel!";
+    if (pct >= 80)   return '🌟 Great work! Keep it up!';
+    if (pct >= 60)   return '📚 Good effort! Review the missed ones.';
+    return '💪 Keep studying — you\'ll get there!';
+}
+
+// ================================================================
+//  BOOT
+// ================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadFromSupabase();
+    renderDashboard();
+    document.getElementById('user-answer')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+});
+</script>
+
+</body>
+</html>
